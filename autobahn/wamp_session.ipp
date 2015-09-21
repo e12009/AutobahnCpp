@@ -1222,15 +1222,19 @@ void wamp_session<IStream, OStream>::send(const std::shared_ptr<msgpack::sbuffer
 
         std::size_t written = 0;
 
-        // write message length prefix
-        uint32_t len = htonl(buffer->size());
-        written += boost::asio::write(m_out, boost::asio::buffer((char*)&len, sizeof(len)));
+        try {
+            // write message length prefix
+            uint32_t len = htonl(buffer->size());
+            written += boost::asio::write(m_out, boost::asio::buffer((char*)&len, sizeof(len)));
 
-        // write actual serialized message
-        written += boost::asio::write(m_out, boost::asio::buffer(buffer->data(), buffer->size()));
+            // write actual serialized message
+            written += boost::asio::write(m_out, boost::asio::buffer(buffer->data(), buffer->size()));
 
-        if (m_debug) {
-            std::cerr << "TX message sent (" << written << " / " << (sizeof(len) + buffer->size()) << " octets)" << std::endl;
+            if (m_debug) {
+                std::cerr << "TX message sent (" << written << " / " << (sizeof(len) + buffer->size()) << " octets)" << std::endl;
+            }
+        } catch (boost::system::system_error& e) {
+            std::cerr << "Failed to write to socket: " << e.what();
         }
     } else {
         if (m_debug) {
